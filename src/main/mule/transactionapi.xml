@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="1486dbba-8fdd-4a26-8c07-bad5cc8573e2" basePath="/api/v1">
+		<http:listener-connection host="0.0.0.0" port="8081" readTimeout="90000000000000000"/>
+	</http:listener-config>
+	<flow name="RetrieveAllTransactions" doc:id="9866b5f3-5660-4385-b531-1ddc2cbb449d" >
+		<http:listener doc:name="Listener" doc:id="dc43b3c4-fc75-4906-b111-cfb6e60994f3" config-ref="HTTP_Listener_config" path="/retrivetransactions"/>
+		<http:request method="GET" doc:name="Request" doc:id="2a0bd702-8b14-4fa1-842a-dadd4183e53e" url="https://mule-nonprd.members1st.org/account-transactions-sapi/dv/v1/api/transactions/retrieve">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	client_secret : "2747b201A972405697e79441Bd605C17 ",
+	client_id : "76e2cefef8fd4d7c80369f396a8fbf1f"
+}]]]></http:headers>
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="66a13547-4819-48da-9c78-44d39339e48d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="RetrieveTransactionByID" doc:id="b21bd183-96ad-43b1-8dc9-04d2439bf282" >
+		<http:listener doc:name="Listener" doc:id="3b4f5cd5-3c88-425b-9981-c2c4d68d27f7" config-ref="HTTP_Listener_config" path="/retrieveById"/>
+		<set-variable value="#[attributes.queryParams.Id]" doc:name="Set Variable" doc:id="28a51c19-9866-46b1-97c0-0aaa2cd5a758" variableName="Id"/>
+		<flow-ref doc:name="Transaction API Sub Flow" doc:id="f0777c08-0282-4df4-9c87-82b5d2ba7321" name="TransactionAPISubFlow"/>
+		<ee:transform doc:name="Transform Message" doc:id="f96b4a2e-b6b6-44aa-aea1-247326894d96" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload filter ((value, index) -> 
+	value.Id ~= vars.Id
+)]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="RetrieveTransactionByAccountNumber" doc:id="7e74dfcb-e2e5-4550-a039-f2fba2c7606f" >
+		<http:listener doc:name="Listener" doc:id="68c5eef9-fa7f-4a0e-b5a9-3c5eed49855c" config-ref="HTTP_Listener_config" path="/retrievebyaccnumber"/>
+		<set-variable value="#[attributes.queryParams.accountNumber]" doc:name="Set Variable" doc:id="004f9faf-29e3-4f95-a621-90609455df99" variableName="AccountNumber"/>
+		<flow-ref doc:name="Transaction API Sub Flow" doc:id="039d1c4e-8206-4207-bfcb-fb193e802e83" name="TransactionAPISubFlow"/>
+		<ee:transform doc:name="Transform Message" doc:id="5dd34a92-3189-4f06-8bb1-364e699fb08e" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload filter ((value, index) -> 
+	value.AccountNumber ~= vars.AccountNumber
+)]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="RetrieveTransactionByDateRange" doc:id="be6c738c-c937-435c-89b2-6a4c03ef26dc" >
+		<http:listener doc:name="Listener" doc:id="ea483e96-fcee-4a9f-a6b2-940dc6457f8d" config-ref="HTTP_Listener_config" path="/retrieveByDate"/>
+		<ee:transform doc:name="Transform Message" doc:id="70e507f4-33d4-4af6-b8dd-63a663bfcd95" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="startDate" ><![CDATA[attributes.queryParams.startDate]]></ee:set-variable>
+				<ee:set-variable variableName="endDate" ><![CDATA[attributes.queryParams.endDate]]></ee:set-variable>
+				<ee:set-variable variableName="dateField" ><![CDATA[attributes.queryParams.dateField]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Transaction API Sub Flow" doc:id="c4789690-120a-46f9-a73e-d0739f24d3e4" name="TransactionAPISubFlow"/>
+		<ee:transform doc:name="Transform Message" doc:id="11f0307d-d05f-4055-a5ba-d07369d12439" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+
+// Function to filter transactions
+fun filterByDateRange(transactions, startDate, endDate, dateField) = 
+    transactions filter (
+        ($[dateField] as DateTime >= (startDate as DateTime)) and 
+        ($[dateField] as DateTime <= (endDate as DateTime))
+    )
+
+---
+filterByDateRange(payload, vars.startDate, vars.endDate, vars.dateField)]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="SearchTransactions" doc:id="5cbc2a69-8aea-46eb-b060-71d53f850428" >
+		<http:listener doc:name="Listener" doc:id="60209c76-8ec8-42b3-b3f5-7f8f0b74eaa0" config-ref="HTTP_Listener_config" path="/search"/>
+		<set-variable value="#[attributes.queryParams]" doc:name="Set Variable" doc:id="59c987f4-a054-4789-b508-1ba68288f148" variableName="queryParams"/>
+		<flow-ref doc:name="Transaction API Sub Flow" doc:id="20e0377b-63ed-415b-8b76-b1f2c4846e5d" name="TransactionAPISubFlow"/>
+		<ee:transform doc:name="Transform Message" doc:id="0e4d43e9-c6ec-4ee4-9487-426f1d1ab9d1" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+
+// Function to normalize values for comparison
+fun normalizeValue(value) = 
+    if (value is String) lower(value)
+    else if (value is Number) value as String
+    else if (value is Date) value as String {format: "yyyy-MM-dd'T'HH:mm:ss"}
+    else if (value is Null) ""
+    else value as String default ""
+
+// Main search function with corrected syntax
+fun searchTransactions(transactions, criteria) = 
+    (transactions default []) filter ((transaction) -> 
+        if (sizeOf(criteria default {}) == 0) 
+            true 
+        else 
+            (keysOf(criteria) reduce ((key, acc = true) -> 
+                acc and 
+                (if (transaction[key]?) 
+                    normalizeValue(transaction[key]) contains normalizeValue(criteria[key])
+                else 
+                    false)
+            ))
+    )
+
+// Main transformation
+var transactions = payload
+var searchParams = vars.queryParams default {}
+
+---
+searchTransactions(transactions, searchParams)]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<sub-flow name="TransactionAPISubFlow" doc:id="48ad50f4-ba06-480a-ae87-7218fc9b3a62" >
+		<http:request method="GET" doc:name="Request" doc:id="fe6f3d37-9c39-4da2-8b84-595750a9145e" url="https://mule-nonprd.members1st.org/account-transactions-sapi/dv/v1/api/transactions/retrieve">
+			<http:headers ><![CDATA[#[output application/java
+---
+{
+	client_secret : "2747b201A972405697e79441Bd605C17",
+	client_id : "76e2cefef8fd4d7c80369f396a8fbf1f"
+}]]]></http:headers>
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="2ec28031-104c-4ed4-a5d6-0f6d55d9b0f3" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</sub-flow>
+</mule>
