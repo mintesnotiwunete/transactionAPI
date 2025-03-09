@@ -28,7 +28,7 @@ payload]]></ee:set-payload>
 		</ee:transform>
 	</flow>
 	<flow name="RetrieveTransactionByID" doc:id="b21bd183-96ad-43b1-8dc9-04d2439bf282" >
-		<http:listener doc:name="Listener" doc:id="3b4f5cd5-3c88-425b-9981-c2c4d68d27f7" config-ref="HTTP_Listener_config" path="/retrieveById"/>
+		<http:listener doc:name="Listener" doc:id="3b4f5cd5-3c88-425b-9981-c2c4d68d27f7" config-ref="HTTP_Listener_config" path="/retrieveById" allowedMethods="GET"/>
 		<set-variable value="#[attributes.queryParams.Id]" doc:name="Set Variable" doc:id="28a51c19-9866-46b1-97c0-0aaa2cd5a758" variableName="Id"/>
 		<flow-ref doc:name="Transaction API Sub Flow" doc:id="f0777c08-0282-4df4-9c87-82b5d2ba7321" name="TransactionAPISubFlow"/>
 		<ee:transform doc:name="Transform Message" doc:id="f96b4a2e-b6b6-44aa-aea1-247326894d96" >
@@ -43,7 +43,7 @@ payload filter ((value, index) ->
 		</ee:transform>
 	</flow>
 	<flow name="RetrieveTransactionByAccountNumber" doc:id="7e74dfcb-e2e5-4550-a039-f2fba2c7606f" >
-		<http:listener doc:name="Listener" doc:id="68c5eef9-fa7f-4a0e-b5a9-3c5eed49855c" config-ref="HTTP_Listener_config" path="/retrievebyaccnumber"/>
+		<http:listener doc:name="Listener" doc:id="68c5eef9-fa7f-4a0e-b5a9-3c5eed49855c" config-ref="HTTP_Listener_config" path="/retrievebyaccnumber" allowedMethods="GET"/>
 		<set-variable value="#[attributes.queryParams.accountNumber]" doc:name="Set Variable" doc:id="004f9faf-29e3-4f95-a621-90609455df99" variableName="AccountNumber"/>
 		<flow-ref doc:name="Transaction API Sub Flow" doc:id="039d1c4e-8206-4207-bfcb-fb193e802e83" name="TransactionAPISubFlow"/>
 		<ee:transform doc:name="Transform Message" doc:id="5dd34a92-3189-4f06-8bb1-364e699fb08e" >
@@ -58,7 +58,7 @@ payload filter ((value, index) ->
 		</ee:transform>
 	</flow>
 	<flow name="RetrieveTransactionByDateRange" doc:id="be6c738c-c937-435c-89b2-6a4c03ef26dc" >
-		<http:listener doc:name="Listener" doc:id="ea483e96-fcee-4a9f-a6b2-940dc6457f8d" config-ref="HTTP_Listener_config" path="/retrieveByDate"/>
+		<http:listener doc:name="Listener" doc:id="ea483e96-fcee-4a9f-a6b2-940dc6457f8d" config-ref="HTTP_Listener_config" path="/retrieveByDate" allowedMethods="GET"/>
 		<ee:transform doc:name="Transform Message" doc:id="70e507f4-33d4-4af6-b8dd-63a663bfcd95" >
 			<ee:message >
 			</ee:message>
@@ -87,7 +87,7 @@ filterByDateRange(payload, vars.startDate, vars.endDate, vars.dateField)]]></ee:
 		</ee:transform>
 	</flow>
 	<flow name="SearchTransactions" doc:id="5cbc2a69-8aea-46eb-b060-71d53f850428" >
-		<http:listener doc:name="Listener" doc:id="60209c76-8ec8-42b3-b3f5-7f8f0b74eaa0" config-ref="HTTP_Listener_config" path="/search"/>
+		<http:listener doc:name="Listener" doc:id="60209c76-8ec8-42b3-b3f5-7f8f0b74eaa0" config-ref="HTTP_Listener_config" path="/search" allowedMethods="GET"/>
 		<set-variable value="#[attributes.queryParams]" doc:name="Set Variable" doc:id="59c987f4-a054-4789-b508-1ba68288f148" variableName="queryParams"/>
 		<flow-ref doc:name="Transaction API Sub Flow" doc:id="20e0377b-63ed-415b-8b76-b1f2c4846e5d" name="TransactionAPISubFlow"/>
 		<ee:transform doc:name="Transform Message" doc:id="0e4d43e9-c6ec-4ee4-9487-426f1d1ab9d1" >
